@@ -1,6 +1,6 @@
 import socket
 import random
-from pokemon import pokemons
+from pokemon import pokemons  # Importa a lista de Pokémons do módulo pokemon
 
 def main():
     server_address = ('localhost', 12345)
