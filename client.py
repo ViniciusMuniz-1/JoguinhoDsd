@@ -3,11 +3,11 @@ import random
 from pokemon import pokemons  # Importa a lista de Pokémons do módulo pokemon
 
 def main():
-    server_address = ('localhost', 12345)
+    server_address_tcp = ('localhost', 12345)
 
     # Estabelecendo conexão TCP
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect(server_address)
+    client_socket.connect(server_address_tcp)
 
     # Escolha de Pokémon
     print("Escolha seu Pokémon:")
