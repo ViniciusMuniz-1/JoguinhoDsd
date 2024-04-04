@@ -22,20 +22,29 @@ def main():
     print(response)
 
     while True:
-        comando = input("Digite 'ataque' para atacar: ")
-        client_socket.sendall(comando.encode())
+        # Receba a mensagem do servidor
+        message = client_socket.recv(1024).decode()
+        print(message)
 
-        if comando.strip().lower() == 'ataque':
-            dado_result = client_socket.recv(1024).decode()
-            print(f"Resultado do dado: {dado_result}")
+        # Verifique se é o turno do jogador
+        if "Sua vez de atacar" in message:
+            comando = input("Digite 'ataque' para atacar: ")
+            client_socket.sendall(comando.encode())
 
-            # Recebendo resultado do ataque
-            response = client_socket.recv(1024).decode()
-            print(response)
+            if comando.strip().lower() == 'ataque':
+                dado_result = client_socket.recv(1024).decode()
+                print(f"Resultado do dado: {dado_result}")
 
-            # Verificar se o jogo terminou
-            if "venceu" in response or "perdeu" in response:
-                break
+                # Recebendo resultado do ataque
+                response = client_socket.recv(1024).decode()
+                print(response)
+
+                # Verificar se o jogo terminou
+                if "venceu" in response or "perdeu" in response:
+                    break
+        else:
+            # Se não for o turno do jogador, continue aguardando mensagens do servidor
+            continue
 
     client_socket.close()
 

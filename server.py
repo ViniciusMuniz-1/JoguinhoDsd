@@ -1,15 +1,8 @@
 import socket
 import random
-from pokemon import Pokemon  # Importa a classe Pokemon do módulo pokemon
+from pokemon import Pokemon, pokemons  # Importa a classe Pokemon do módulo pokemon
 
-# Lista de Pokémons disponíveis
-pokemons = [
-    Pokemon("Charmander", vida=100, ataque=20, defesa=10, dano=25),
-    Pokemon("Bulbasaur", vida=110, ataque=18, defesa=12, dano=23),
-    Pokemon("Squirtle", vida=120, ataque=16, defesa=14, dano=21),
-    Pokemon("Pikachu", vida=90, ataque=25, defesa=8, dano=30),
-    Pokemon("Jigglypuff", vida=130, ataque=15, defesa=16, dano=20)
-]
+
 
 def main():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -28,11 +21,6 @@ def main():
 
     # Escolha de Pokémon para cada jogador
     for i, (player, client_address) in enumerate(players):
-        # Envie as opções de Pokémon para o jogador
-        player.sendall("Escolha seu Pokémon:\n".encode())
-        for j, pokemon in enumerate(pokemons):
-            player.sendall(f"{j}: {pokemon.nome}\n".encode())
-        
         # Receba a escolha do jogador e informe o Pokémon escolhido
         pokemon_idx = int(player.recv(1024).decode())
         selected_pokemon = pokemons[pokemon_idx]
@@ -64,44 +52,33 @@ def main():
 
         # Receba o comando de ataque do jogador atual
         data = current_player.recv(1024).decode()
-        if current_player == players[current_player_index][0]:  # Verifica se é o turno do jogador atual
-            if data.strip().lower() == 'ataque':
-                # Simule o ataque
-                dado_result = random.randint(1, 20)
-                ataque = current_pokemon.ataque + dado_result
+        if data.strip().lower() == 'ataque':
+            # Simule o ataque
+            dado_result = random.randint(1, 20)
+            ataque = current_pokemon.ataque + dado_result
 
-                # Envie o resultado do ataque para ambos os jogadores
+            # Envie o resultado do ataque para ambos os jogadores
+            for player, _ in players:
+                player.sendall(f"Resultado do dado: {dado_result}\n".encode())
+                player.sendall(f"Resultado do ataque: {ataque}\n".encode())
+
+            # Verifique se o ataque acertou
+            if ataque > other_pokemon.defesa:
+                other_pokemon.vida -= current_pokemon.dano
+                # Envie mensagem de ataque bem-sucedido e vida atual do oponente
                 for player, _ in players:
-                    player.sendall(f"Resultado do dado: {dado_result}\n".encode())
-                    player.sendall(f"Resultado do ataque: {ataque}\n".encode())
-
-                # Verifique se o ataque acertou
-                if ataque > other_pokemon.defesa:
-                    other_pokemon.vida -= current_pokemon.dano
-                    # Envie mensagem de ataque bem-sucedido e vida atual do oponente
-                    for player, _ in players:
-                        player.sendall(f"Ataque de {current_pokemon.nome} acertou! Causou {current_pokemon.dano} de dano\n".encode())
-                        player.sendall(f"Vida atual do Pokémon adversário ({other_pokemon.nome}): {other_pokemon.vida}\n".encode())
-                else:
-                    # Envie mensagem de ataque falhou
-                    for player, _ in players:
-                        player.sendall("Ataque falhou!\n".encode())
+                    player.sendall(f"Ataque de {current_pokemon.nome} acertou! Causou {current_pokemon.dano} de dano\n".encode())
 
                 # Verifique se o jogo terminou
                 if not other_pokemon.esta_vivo():
-                    current_player.sendall("Você venceu!\n".encode())
-                    other_player.sendall("Você perdeu!\n".encode())
-                    # Feche todas as conexões e termine o jogo
-                    for player, _ in players:
-                        player.close()
-                    return
+                    current_player.sendall("Parabéns! Seu Pokémon derrotou o adversário!\n".encode())
+                    other_player.sendall("Seu Pokémon foi derrotado pelo adversário!\n".encode())
+                    break  # Saia do loop principal do jogo
 
-                # Alternar para o próximo jogador
-                current_player_index = (current_player_index + 1) % 2
 
-    # Feche todas as conexões
-    for player, _ in players:
-        player.close()
+        # Alternar para o próximo jogador
+        current_player_index = (current_player_index + 1) % 2
 
+                        
 if __name__ == "__main__":
     main()
